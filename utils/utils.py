@@ -29,17 +29,21 @@ def setup_callbacks(model_dir, use_callbacks):
     """
     callbacks = []
     if 'tf_logs' in use_callbacks:
-        logs_dir = model_dir / 'logs' / "tf_logs"
+        # Create a directory to save TensorBoard logs
+        logs_dir = model_dir / "tf_logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
+        # Create a TensorBoard callback
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=str(logs_dir))
         callbacks.append(tensorboard_callback)
 
     if 'keras_checkpoints' in use_callbacks:
+        # Create a directory to save model checkpoints
         checkpoints_dir = model_dir / 'checkpoints'
         checkpoints_dir.mkdir(parents=True, exist_ok=True)
         checkpoint_path = checkpoints_dir / "best_model.keras"
+        # Create a ModelCheckpoint callback
         checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-            filepath=str(checkpoint_path), save_best_only=True, verbose=1)
+            filepath=str(checkpoint_path), mode="auto", save_best_only=True, verbose=1)
         callbacks.append(checkpoint_callback)
 
     return callbacks
