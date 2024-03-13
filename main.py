@@ -1,68 +1,88 @@
 import pandas as pd
-from light_tools import bands_to_wavelengths, pull_spectral_images
+from utils.light_tools import bands_to_wavelengths
+from utils.utils import pull_spectral_images, save_model, get_model
 from sklearn.model_selection import train_test_split
-from generator import SpectralImageDataGenerator
-from net_def import create_3d_autoencoder
-import numpy as np
-from keras.models import load_model
-import sys
+from net.generator import SpectralImageDataGenerator
+from net.net_def import create_3d_autoencoder
+import tensorflow as tf
+from tensorflow.keras.callbacks import TensorBoard
+import os
 
+
+# Tensorflow configuration
+# Logging for debugging
+logdir = os.path.join("logs", "tf_debug_logs")
+os.makedirs(logdir, exist_ok=True)
+tf.debugging.experimental.enable_dump_debug_info(
+    logdir,
+    tensor_debug_mode="FULL_HEALTH",
+    circular_buffer_size=-1
+)
+
+
+# Note: Batch size should be uniform for data generation and model training?
 batch_size = 32
 
-
-# Load the band information
-bands = pd.read_csv("enmap_bands.csv")
+# Note: Should be incorporated into the generator? Should be used somehow.
+bands = pd.read_csv("ref_data/enmap_bands.csv")
 band_info_df = bands_to_wavelengths(bands)
 wavelengths = bands['CW (nm)'].values
 
 
 # Load the spectral images
-spectral_images = pull_spectral_images("hyspecnet-11k/patches")
+spectral_images, input_shape = pull_spectral_images("hyspecnet-11k/patches", type='npy')
+print(f"Loaded {len(spectral_images)} spectral images with input shape {input_shape}.")
 
 
 # Split the data into training and validation sets
 image_paths_train, image_paths_val = train_test_split(spectral_images, test_size=0.2, random_state=42)
 train_gen = SpectralImageDataGenerator(image_paths_train, batch_size=batch_size)
 val_gen = SpectralImageDataGenerator(image_paths_val, batch_size=batch_size)
+print(f"Inputs set to {input_shape} with {len(image_paths_train)} training images and {len(image_paths_val)} validation images.")
 
 
 # Define the model
-input_shape = (128, 128, 224, 1)  
-autoencoder = create_3d_autoencoder(input_shape)
+# input_shape = (128, 128, 224, 1)  
+autoencoder = create_3d_autoencoder(input_shape, )
 autoencoder.compile(optimizer='adam', loss='mean_squared_error')
 autoencoder.summary()
+
+
+# Tensorboard callback
+# tensorboard_callback = TensorBoard(log_dir='./logs', histogram_freq=1)
 
 
 # Train the model
 autoencoder.fit(
     train_gen,  # The generator provides both x and y
-    epochs=1,
+    epochs=2,
     batch_size=batch_size,
-    shuffle=False, 
+    shuffle=True, 
     validation_data=val_gen, 
-    verbose=2
+    verbose=1,
+    # callbacks=[tensorboard_callback]
 )
 
 
 # Save the model
-autoencoder.save("3d_autoencoder.h5")
+save_model(autoencoder, "3d_autoencoder")
 
-# Load the model
-loaded_model = load_model("3d_autoencoder.h5")
+# # Load the model
+# loaded_model = load_model("3d_autoencoder.keras")
 
-# Make predictions
-sample_image = spectral_images[0]
-sample_image = sample_image[np.newaxis, ..., np.newaxis]  # Add batch and channel dimensions
-reconstructed_image = loaded_model.predict(sample_image)
+# # Make predictions
+# sample_image = spectral_images[0]
+# sample_image = sample_image[np.newaxis, ..., np.newaxis]  # Add batch and channel dimensions
+# reconstructed_image = loaded_model.predict(sample_image)
 
-# Plot the original and reconstructed images
-import matplotlib.pyplot as plt
+# # Plot the original and reconstructed images
+# import matplotlib.pyplot as plt
 
-fig, axes = plt.subplots(1, 2, figsize=(14, 7))
-axes[0].imshow(sample_image[0, :, :, 0, 0], cmap='gray')
-axes[0].set_title('Original Image')
-axes[1].imshow(reconstructed_image[0, :, :, 0, 0], cmap='gray')
+# fig, axes = plt.subplots(1, 2, figsize=(14, 7))
+# axes[0].imshow(sample_image[0, :, :, 0, 0], cmap='gray')
+# axes[0].set_title('Original Image')
+# axes[1].imshow(reconstructed_image[0, :, :, 0, 0], cmap='gray')
 
 
-axes[1].set_title('Reconstructed Image')
-plt.show()
+# axes[1].set_title('Reconstructed Image')
+# plt.show()
