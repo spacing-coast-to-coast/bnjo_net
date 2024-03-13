@@ -1,6 +1,7 @@
 from pathlib import Path
 import datetime
 from tensorflow.keras.models import load_model
+import os
 
 
 def pull_spectral_images(root_dir, type):
@@ -15,6 +16,7 @@ def pull_spectral_images(root_dir, type):
 
 def save_model(model, model_name):
     dtm = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    os.makedirs('../models', exist_ok=True)
     model.save(f"../models/{model_name}_{dtm}.keras")
     print(f"Model saved as {model_name}_{dtm}.keras")
 

@@ -19,9 +19,10 @@ tf.debugging.experimental.enable_dump_debug_info(
     circular_buffer_size=-1
 )
 
-
+file_type = 'npy'
 # Note: Batch size should be uniform for data generation and model training?
 batch_size = 32
+epochs = 10
 
 # Note: Should be incorporated into the generator? Should be used somehow.
 bands = pd.read_csv("ref_data/enmap_bands.csv")
@@ -30,7 +31,7 @@ wavelengths = bands['CW (nm)'].values
 
 
 # Load the spectral images
-spectral_images, input_shape = pull_spectral_images("hyspecnet-11k/patches", type='npy')
+spectral_images, input_shape = pull_spectral_images("hyspecnet-11k/patches", type=file_type)
 print(f"Loaded {len(spectral_images)} spectral images with input shape {input_shape}.")
 
 
@@ -55,34 +56,14 @@ autoencoder.summary()
 # Train the model
 autoencoder.fit(
     train_gen,  # The generator provides both x and y
-    epochs=2,
+    epochs=epochs,
     batch_size=batch_size,
     shuffle=True, 
     validation_data=val_gen, 
-    verbose=1,
+    verbose='auto',
     # callbacks=[tensorboard_callback]
 )
 
 
 # Save the model
 save_model(autoencoder, "3d_autoencoder")
-
-# # Load the model
-# loaded_model = load_model("3d_autoencoder.keras")
-
-# # Make predictions
-# sample_image = spectral_images[0]
-# sample_image = sample_image[np.newaxis, ..., np.newaxis]  # Add batch and channel dimensions
-# reconstructed_image = loaded_model.predict(sample_image)
-
-# # Plot the original and reconstructed images
-# import matplotlib.pyplot as plt
-
-# fig, axes = plt.subplots(1, 2, figsize=(14, 7))
-# axes[0].imshow(sample_image[0, :, :, 0, 0], cmap='gray')
-# axes[0].set_title('Original Image')
-# axes[1].imshow(reconstructed_image[0, :, :, 0, 0], cmap='gray')
-
-
-# axes[1].set_title('Reconstructed Image')
-# plt.show()
