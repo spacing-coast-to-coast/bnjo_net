@@ -3,15 +3,16 @@ from utils.light_tools import bands_to_wavelengths
 from utils.utils import setup_model, pull_spectral_images, save_model
 from sklearn.model_selection import train_test_split
 from net.generator import SpectralImageDataGenerator
-from net.net_def import create_3d_autoencoder
+from net.net_def import v1_3d_autoencoder
 
 
 # Model Configuration
 MODEL_NAME = '3d_autoencoder'
 INPUT_FILE_TYPE = 'npy'
+INPUT_FILES = "hyspecnet-11k/patches_reduced"
 BATCH_SIZE = 32
 EPOCHS = 2
-USE_CALLBACKS = ['tf_logs', 'keras_checkpoints']
+USE_CALLBACKS = ['tf_logs', 'keras_checkpoints', 'early_stopping']
 
 
 # Note: Should be incorporated into the generator? Should be used somehow.
@@ -21,7 +22,7 @@ wavelengths = bands['CW (nm)'].values
 
 
 # Load the spectral images
-spectral_images, input_shape = pull_spectral_images("hyspecnet-11k/patches", type=INPUT_FILE_TYPE)
+spectral_images, input_shape = pull_spectral_images(INPUT_FILES, type=INPUT_FILE_TYPE)
 print(f"Loaded {len(spectral_images)} spectral images with input shape {input_shape}.")
 
 
@@ -33,7 +34,7 @@ print(f"Inputs set to {input_shape} with {len(image_paths_train)} training image
 
 
 # Define the model
-autoencoder = create_3d_autoencoder(input_shape)
+autoencoder = v1_3d_autoencoder(input_shape)
 autoencoder.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
 autoencoder.summary()
 
@@ -58,4 +59,4 @@ autoencoder.fit(
 
 # Save the model
 saved_model = save_model(autoencoder, MODEL_NAME, model_dir)  
-print(f"Model and accompanying info saved to {saved_model}")
+print(f"Model and accompanying info saved to {model_dir}")

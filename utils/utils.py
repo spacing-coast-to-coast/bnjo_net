@@ -32,8 +32,8 @@ def setup_callbacks(model_dir, use_callbacks):
         # Create a directory to save TensorBoard logs
         logs_dir = model_dir / "tf_logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
-        # Create a TensorBoard callback
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=str(logs_dir))
+        # TensorBoard callback
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=str(logs_dir), histogram_freq=1, write_graph=True)
         callbacks.append(tensorboard_callback)
 
     if 'keras_checkpoints' in use_callbacks:
@@ -41,10 +41,20 @@ def setup_callbacks(model_dir, use_callbacks):
         checkpoints_dir = model_dir / 'checkpoints'
         checkpoints_dir.mkdir(parents=True, exist_ok=True)
         checkpoint_path = checkpoints_dir / "best_model.keras"
-        # Create a ModelCheckpoint callback
+        # ModelCheckpoint callback
         checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             filepath=str(checkpoint_path), mode="auto", save_best_only=True, verbose=1)
         callbacks.append(checkpoint_callback)
+
+    if 'early_stopping' in use_callbacks:
+        # EarlyStopping callback
+        early_stopping_callback = tf.keras.callbacks.EarlyStopping( monitor='val_loss', patience=3, restore_best_weights=True)
+        callbacks.append(early_stopping_callback)
+
+    if 'debug' in use_callbacks:
+        # Debug callback
+        debug_callback = tf.debugging.experimental.enable_dump_debug_info(str(logs_dir), tensor_debug_mode="FULL_HEALTH", circular_buffer_size=-1)
+        callbacks.append(debug_callback)
 
     return callbacks
 

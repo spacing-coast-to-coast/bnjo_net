@@ -2,6 +2,7 @@ import numpy as np
 import rasterio
 from tensorflow.keras.utils import Sequence
 from pathlib import Path
+from net.normalize import normalize_image
 
 class SpectralImageDataGenerator(Sequence):
     def __init__(self, image_paths, batch_size=32, shuffle=False, **kwargs):
@@ -50,7 +51,14 @@ class SpectralImageDataGenerator(Sequence):
             np.random.shuffle(self.indexes)
 
     def __data_generation(self, batch_paths):
-        # Initialize X with the correct shape for hyperspectral images.
+        # Initialize X with the correct shape for hyperspectral images. 
+        # HySpecNet-11k is made up of 11,483 image patches acquired by the Environmental Mapping and Analysis Program (EnMAP) satellite.
+        # Each image patch in HySpecNet-11k consists of 128 × 128 pixels and 224 bands.
+        # The hyperspectral data for each patch is stored in geotiff format (*-SPECTRAL_IMAGE.TIF).
+        # The authors also provide preprocessed data in the form of .npy files, which contain the same 128x128 patches but with 202 bands.
+        # You may have to generate them using the script provided by the HySpecNet authors in utils/convert_tif_to_npy.py. https://hyspecnet.rsim.berlin.
+        # Unpack in place using "cat *.tar.gz | tar -ixzv".
+    
         file_type = Path(batch_paths[0]).suffix
         if file_type == '.TIF':
             X = np.empty((len(batch_paths), 128, 128, 224))
@@ -63,7 +71,7 @@ class SpectralImageDataGenerator(Sequence):
         for i, path in enumerate(batch_paths):
             file_extension = Path(path).suffix
 
-            # Check if .TIFF
+            # For .TIFF
             if file_extension == '.TIF':
                 try:
                     with rasterio.open(path) as src:
@@ -86,25 +94,40 @@ class SpectralImageDataGenerator(Sequence):
                             print(f"Image with only zero values detected: {path}")
                             continue  
                         
-                        # Normalizing the image
-                        image /= (max_val + np.finfo(float).eps)
-                        
-                        X[i] = image  # Direct assignment without adding an extra dimension.
+                        # Example: Normalizing a single image to [-1, 1]
+                        # Example: Normalizing to [0, 1] instead
+                        image = normalize_image(image, target_range=(-1, 1))
+
+                        X[i] = image
+
 
                 except Exception as e:
                     print(f"Error processing TIF image {path}: {e}")
 
-            # Check if .npy
+            # .npy
             elif file_extension == '.npy':
                 try:
                     image = np.load(path)
                     image = np.transpose(image, (1, 2, 0))
                     assert image.shape == (128, 128, 202), f"Incorrect image shape for {path}: {image.shape}"
-                   
-                    # Normalizing the image
-                    # This is between 0 and 1.
+
+                    if np.isnan(image).any():
+                        print(f"NaN values detected in image loaded from {path}")
+                        continue 
+
+                    if np.any(image == None):
+                        print(f"None values detected in image loaded from {path}")
+                        continue
+                        
                     max_val = np.max(image)
-                    image /= (max_val + np.finfo(float).eps)
+                    if max_val == 0:
+                        print(f"Image with only zero values detected: {path}")
+                        continue  
+                   
+                    # Example: Normalizing a single image to [-1, 1]
+                    # Example: Normalizing to [0, 1] instead
+                    image = normalize_image(image, target_range=(-1, 1))
+
                     X[i] = image
 
                 except Exception as e:
@@ -120,3 +143,4 @@ class SpectralImageDataGenerator(Sequence):
     
         return X
 
+    
