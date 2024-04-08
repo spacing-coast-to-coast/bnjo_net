@@ -1,4 +1,11 @@
-DeepHS/
+DeepHS/Avocado/
+DeepHS/Kaki/
+DeepHS/Kiwi/
+DeepHS/Mango/
+DeepHS/Papaya/
+
 ecospeclib-all/
+
 models/
+
 *.pyc
