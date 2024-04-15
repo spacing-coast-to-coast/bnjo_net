@@ -1,6 +1,3 @@
-
-
-
 Directory structure:
 
 Put DeepHS and ecostress into their own directories
