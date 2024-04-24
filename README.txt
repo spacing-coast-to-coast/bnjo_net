@@ -15,3 +15,5 @@ Create a folder for models to save and load
 |-models/
 |-net/
 |-main.ibynb
+
+Optionally, swap out DeepHS for any HSI images. Create utils and sequence files to match then run the VAEs.

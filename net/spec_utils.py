@@ -4,6 +4,75 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from scipy.signal import savgol_filter
 from scipy.interpolate import interp1d
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+
+def parse_and_store_spectral_data(required_keys, directory_path, target_wavelengths=np.linspace(1.0, 2.5, 224)):
+    spectral_data_df = pd.DataFrame(columns=required_keys + ['normalized_reflectances', 'wavelengths'])
+
+    for filename in os.listdir(directory_path):
+        if filename.endswith('.spectrum.txt'):
+            file_path = os.path.join(directory_path, filename)
+
+            if os.path.isfile(file_path):
+                metadata, wavelengths, reflectances = parse_spectral_file(file_path, directory_path)
+
+                if wavelengths and all(key in metadata for key in required_keys):
+                    # Normalize and interpolate reflectances
+                    spectrum_data = {'wavelengths': wavelengths, 'reflectances': reflectances}
+                    normalized_reflectances, interpolated_wavelengths = normalize_and_interpolate_reflectances(spectrum_data, target_wavelengths)
+
+                    # Create a row for the DataFrame
+                    row = pd.DataFrame({key: [metadata.get(key, None)] for key in required_keys}, index=[0])
+                    row['normalized_reflectances'] = [normalized_reflectances]
+                    row['wavelengths'] = [interpolated_wavelengths]
+
+                    # Append row 
+                    spectral_data_df = pd.concat([spectral_data_df, row], ignore_index=True)
+
+    return spectral_data_df
+
+def normalize_and_interpolate_reflectances(spectrum_data, target_wavelengths):
+    wavelengths = spectrum_data['wavelengths']
+    reflectances = spectrum_data['reflectances']
+
+    # Normalize reflectances
+    normalized_reflectances = normalize_reflectances([spectrum_data])
+
+    # Smooth spectra
+    smoothed_spectra = smooth_spectra(normalized_reflectances)
+
+    # Interpolate to common grid
+    interpolated_spectra = interpolate_to_common_grid(smoothed_spectra, target_wavelengths)
+
+    # Extract and normalize reflectance values
+    reflectance_values = np.array([spectrum['reflectances'] for spectrum in interpolated_spectra])
+    scaler = StandardScaler()
+    normalized_reflectances = scaler.fit_transform(reflectance_values)
+
+    return normalized_reflectances[0], target_wavelengths
+
+
+
+def encode_metadata(metadatas):
+    encoder = LabelEncoder()
+    encoded_data = []
+    for key in ['Name', 'Type', 'Class', 'Genus', 'Species']:
+        # Attempt to collect unique values for encoding
+        unique_values = list(set(meta[key] for meta in metadatas if key in meta))
+        print(f"Unique values for {key}: {unique_values}") 
+        print(f"Number of unique values for {key}: {len(unique_values)}")  
+        
+        # Encode each metadata entry
+        encoder.fit(unique_values)
+        for meta in metadatas:
+            if key in meta:
+                meta[f"{key}_encoded"] = encoder.transform([meta[key]])[0]
+        encoded_data.append([meta.get(f"{key}_encoded", None) for meta in metadatas])
+
+    return np.array(encoded_data).T  # transpose to match rows with data entries
+
+
 
 
 def parse_spectral_file(file_path, spectra_files_dir):
@@ -52,19 +121,31 @@ def read_and_preprocess_spectral_data(directory_path, target_wavelengths=np.lins
                         'wavelengths': wavelengths,
                         'reflectances': reflectances
                     })
-
+                    
     # Apply preprocessing steps
     print(f"Found {len(all_spectral_data)} spectral files")
     normalized_spectral_data = normalize_reflectances(all_spectral_data)
     smoothed_spectral_data = smooth_spectra(normalized_spectral_data)
     interpolated_spectral_data = interpolate_to_common_grid(smoothed_spectral_data, target_wavelengths)
+    print(f"Interpolated spectral data: {interpolated_spectral_data[4]}")
 
     
     reflectance_values = np.array([spectrum['reflectances'] for spectrum in interpolated_spectral_data])
     scaler = StandardScaler()
     X_data_normalized = scaler.fit_transform(reflectance_values)
 
-    return X_data_normalized
+    encoded_metadata = encode_metadata([spectrum['metadata'] for spectrum in interpolated_spectral_data])
+    # Print the shape of encoded_metadata
+    print(f"Shape of encoded_metadata: {np.array(encoded_metadata).shape}")
+
+    # Print the first few entries of encoded_metadata
+    print(f"First few entries of encoded_metadata: {encoded_metadata[:5]}")
+
+    # Create a DataFrame with the encoded metadata and normalized reflectance values
+    data_df = pd.DataFrame(encoded_metadata, columns=['Name_encoded', 'Type_encoded', 'Class_encoded', 'Genus_encoded', 'Species_encoded'])
+    data_df['normalized_reflectances'] = pd.Series(X_data_normalized.tolist())
+
+    return X_data_normalized, data_df
 
 # def parse_spectral_file(file_path):
 #     try:

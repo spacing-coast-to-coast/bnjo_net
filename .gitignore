@@ -6,6 +6,8 @@ DeepHS/Papaya/
 
 ecospeclib-all/
 
+HySpecNet/
+
 models/
 
 *.pyc

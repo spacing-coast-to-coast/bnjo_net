@@ -3,7 +3,7 @@ from glob import glob
 import os
 import numpy as np
 from scipy.interpolate import interp1d
-from net.spec_utils import parse_spectral_file
+from net.spec_utils import parse_spectral_file, read_and_preprocess_spectral_data
 
 class SpectralDataSequence(tf.keras.utils.Sequence):
     def __init__(self, file_paths, batch_size, target_wavelengths, shuffle=False):
@@ -23,7 +23,7 @@ class SpectralDataSequence(tf.keras.utils.Sequence):
             
     def __getitem__(self, idx):
         batch_file_paths = self.file_paths[idx * self.batch_size:(idx + 1) * self.batch_size]
-        batch_data = [read_and_preprocess_spectral_data_single(file_path, self.target_wavelengths) for file_path in batch_file_paths]
+        batch_data = [read_and_preprocess_spectral_data(file_path, self.target_wavelengths) for file_path in batch_file_paths]
         batch_data = np.array(batch_data)
         batch_data = batch_data.reshape(-1, 224, 1)
         
