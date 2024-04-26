@@ -4,7 +4,8 @@ import numpy as np
 
 
 class HyperspectralSequence(tf.keras.utils.Sequence):
-    def __init__(self, annotations, data_dir, selected_fruits, batch_size, max_bands=224, target_size=(64, 64)):
+    def __init__(self, annotations, data_dir, selected_fruits, batch_size, max_bands=224, target_size=(64, 64), **kwargs):
+        super().__init__(**kwargs)
         self.annotations = annotations
         self.data_dir = data_dir
         self.selected_fruits = selected_fruits

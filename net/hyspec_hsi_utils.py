@@ -18,14 +18,3 @@ def load_hyspecnet_images(directory):
 
     return training_paths, validation_paths, test_paths
 
-# @INPROCEEDINGS{10283385,
-#   author={Fuchs, Martin Hermann Paul and Demir, Begüm},
-#   booktitle={IGARSS 2023 - 2023 IEEE International Geoscience and Remote Sensing Symposium}, 
-#   title={HySpecNet-11k: a Large-Scale Hyperspectral Dataset for Benchmarking Learning-Based Hyperspectral Image Compression Methods}, 
-#   year={2023},
-#   volume={},
-#   number={},
-#   pages={1779-1782},
-#   doi={10.1109/IGARSS52108.2023.10283385}}
-
-#preprocessing steps include stripping all files that are not .jpg and .npy

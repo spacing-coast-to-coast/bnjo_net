@@ -6,7 +6,8 @@ from scipy.interpolate import interp1d
 from net.spec_utils import parse_spectral_file, read_and_preprocess_spectral_data
 
 class SpectralDataSequence(tf.keras.utils.Sequence):
-    def __init__(self, file_paths, batch_size, target_wavelengths, shuffle=False):
+    def __init__(self, file_paths, batch_size, target_wavelengths, shuffle=False, **kwargs):
+        super().__init__(**kwargs)
         self.file_paths = file_paths
         self.batch_size = batch_size
         self.target_wavelengths = target_wavelengths

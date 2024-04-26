@@ -104,7 +104,7 @@ class PCASpectralImageDataGenerator(Sequence):
 
 
 
-## From the previous notebook
+## From our previous notebook
 # class SpectralImageDataGenerator(Sequence):
 #     def __init__(self, image_paths, batch_size=32, shuffle=True, **kwargs):
 #         """
