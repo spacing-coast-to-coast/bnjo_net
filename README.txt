@@ -3,7 +3,7 @@ Directory structure:
 Put DeepHS and ecostress into their own directories
 DeepHS fruit dirs should be unzipped and placed in DeepHS.
 Create a folder for models to save and load. This structure is designed
-to be used with any dataset.
+to be used with any HSI dataset.
 
 |--Directory Structure
 |(root)
@@ -33,15 +33,16 @@ DeepHS:
 Paper: https://arxiv.org/abs/2104.09808v1
 Dataset: https://cogsys.cs.uni-tuebingen.de/webprojects/DeepHS-Fruit-2023-Datasets/
 Citation:
-# @INPROCEEDINGS{10283385,
-#   author={Fuchs, Martin Hermann Paul and Demir, Begüm},
-#   booktitle={IGARSS 2023 - 2023 IEEE International Geoscience and Remote Sensing Symposium}, 
-#   title={HySpecNet-11k: a Large-Scale Hyperspectral Dataset for Benchmarking Learning-Based Hyperspectral Image Compression Methods}, 
-#   year={2023},
-#   volume={},
-#   number={},
-#   pages={1779-1782},
-#   doi={10.1109/IGARSS52108.2023.10283385}}
+@INPROCEEDINGS{10283385,
+  author={Fuchs, Martin Hermann Paul and Demir, Begüm},
+  booktitle={IGARSS 2023 - 2023 IEEE International Geoscience and Remote Sensing Symposium}, 
+  title={HySpecNet-11k: a Large-Scale Hyperspectral Dataset for Benchmarking Learning-Based Hyperspectral Image Compression Methods}, 
+  year={2023},
+  volume={},
+  number={},
+  pages={1779-1782},
+  doi={10.1109/IGARSS52108.2023.10283385}}
+
 
 HySpecNet:
 Paper and Dataset: https://hyspecnet.rsim.berlin/
